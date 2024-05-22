@@ -21,6 +21,32 @@ type MusicianResponse struct {
 	} `json:"response"`
 }
 
+type Artwork struct {
+	Sizes struct {
+		Original string `json:"original"`
+	} `json:"sizes"`
+}
+
+type Metadata struct {
+	ArtistName string   `json:"artistName"`
+	BPM        int      `json:"bpm"`
+	Genres     []string `json:"genres"`
+	Tags       []string `json:"tags"`
+}
+
+type Hit struct {
+	Artwork          Artwork  `json:"artwork"`
+	Metadata         Metadata `json:"metadata"`
+	V2Id             int      `json:"v2Id"`
+	ReleaseTimestamp int64    `json:"releaseTimestamp"`
+	Title            string   `json:"title"`
+}
+
+type ArtistData struct {
+	NbPages int   `json:"nbPages"`
+	Hits    []Hit `json:"hits"`
+}
+
 func downloadArtistTracks(permalink string) {
 	client := &http.Client{}
 	log.Println("Retrieving artist tracks...")
@@ -59,7 +85,7 @@ func downloadArtistTracks(permalink string) {
 		wg.Wait()
 
 		fmt.Println()
-		log.Printf("- Downloaded all tracks for %s\n", permalink)
+		log.Printf("Downloaded all %d tracks for %s\n", len(tracks), permalink)
 		close(errChan)
 
 		for err := range errChan {
@@ -100,42 +126,25 @@ func getArtistTracks(permalink string, client *http.Client) []Track {
 		}`, page, memberId)
 		artistDataResp := makeHTTPRequest(client, "POST", queryURL, strings.NewReader(data))
 
-		var artistData map[string]interface{}
+		var artistData ArtistData
 		json.Unmarshal(artistDataResp, &artistData)
 
-		nbPages := int(artistData["nbPages"].(float64))
+		nbPages := artistData.NbPages
 
-		hits := artistData["hits"].([]interface{})
-		for _, hit := range hits {
-			hitMap, ok := hit.(map[string]interface{})
-			if !ok {
-				log.Fatalf("Could not convert hit to map[string]interface{}")
-			}
-
-			artwork := hitMap["artwork"].(map[string]interface{})
-			metadata := hitMap["metadata"].(map[string]interface{})
-
-			var genres, tags []string
-			if metadata["genres"] != nil {
-				genres = convertInterfaceSliceToStringSlice(metadata["genres"].([]interface{}))
-			}
-			if metadata["tags"] != nil {
-				tags = convertInterfaceSliceToStringSlice(metadata["tags"].([]interface{}))
-			}
-
-			trackID := int(hitMap["v2Id"].(float64))
+		for _, hit := range artistData.Hits {
+			trackID := int(hit.V2Id)
 			streamURL := fmt.Sprintf("https://main.v2.beatstars.com/stream?id=%d&return=audio", trackID)
 
 			track := Track{
-				ArtworkOriginal: artwork["sizes"].(map[string]interface{})["original"].(string),
-				StreamURL:       streamURL,
-				ReleaseDate:     hitMap["releaseDate"].(string),
-				ID:              trackID,
-				ArtistName:      metadata["artistName"].(string),
-				BPM:             int(metadata["bpm"].(float64)),
-				Genres:          genres,
-				Tags:            tags,
-				Title:           hitMap["title"].(string),
+				ArtworkOriginal:  hit.Artwork.Sizes.Original,
+				StreamURL:        streamURL,
+				ReleaseTimestamp: hit.ReleaseTimestamp,
+				ID:               trackID,
+				ArtistName:       hit.Metadata.ArtistName,
+				BPM:              hit.Metadata.BPM,
+				Genres:           hit.Metadata.Genres,
+				Tags:             hit.Metadata.Tags,
+				Title:            hit.Title,
 			}
 
 			allTracks = append(allTracks, track)
@@ -148,12 +157,4 @@ func getArtistTracks(permalink string, client *http.Client) []Track {
 	}
 
 	return allTracks
-}
-
-func convertInterfaceSliceToStringSlice(slice []interface{}) []string {
-	strSlice := make([]string, len(slice))
-	for i, v := range slice {
-		strSlice[i] = v.(string)
-	}
-	return strSlice
 }
