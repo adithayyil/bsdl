@@ -29,7 +29,7 @@ jobs:
     - name: Build binary
       run: |
         mkdir -p build
-        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o build/myapp-${{ matrix.goos }}-${{ matrix.goarch }}
+        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o build/bsdl-${{ matrix.goos }}-${{ matrix.goarch }}
 
     - name: Upload binary
       uses: actions/upload-artifact@v3
