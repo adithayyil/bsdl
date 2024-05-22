@@ -32,7 +32,7 @@ jobs:
         GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o build/bsdl-${{ matrix.goos }}-${{ matrix.goarch }}
 
     - name: Upload binary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: bsdl-${{ matrix.goos }}-${{ matrix.goarch }}
         path: build/bsdl-${{ matrix.goos }}-${{ matrix.goarch }}
