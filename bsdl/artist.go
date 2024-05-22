@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
+
+	"github.com/vbauerster/mpb"
 )
 
 type MusicianResponse struct {
@@ -18,27 +21,51 @@ type MusicianResponse struct {
 	} `json:"response"`
 }
 
-type Track struct {
-	Title           string   `json:"title"`
-	ArtistName      string   `json:"artist_name"`
-	StreamURL       string   `json:"stream_url"`
-	ReleaseDate     string   `json:"release_date"`
-	ArtworkOriginal string   `json:"artwork_original"`
-	ID              int      `json:"v2Id"`
-	BPM             int      `json:"bpm"`
-	Genres          []string `json:"genres"`
-	Tags            []string `json:"tags"`
-}
-
 func downloadArtistTracks(permalink string) {
 	client := &http.Client{}
+	log.Println("Retrieving artist tracks...")
 	tracks := getArtistTracks(permalink, client)
 
-	for _, track := range tracks {
-		fmt.Printf("Downloading track: %s by %s\n", track.Title, track.ArtistName)
-		err := downloadFile(track.StreamURL, track.Title, client, track.ArtistName)
-		if err != nil {
-			log.Printf("Failed to download track: %s by %s. Error: %v\n", track.Title, track.ArtistName, err)
+	if len(tracks) == 0 {
+		log.Fatalf("No tracks found for artist with permalink: %s\n", permalink)
+	} else {
+		log.Printf("Retrieved %d tracks from %s :3\n", len(tracks), permalink)
+		fmt.Println()
+		errChan := make(chan error, len(tracks))
+		var wg sync.WaitGroup
+
+		p := mpb.New()
+
+		// Create a buffered channel to limit the number of concurrent downloads
+		sem := make(chan struct{}, 10)
+
+		for _, track := range tracks {
+			wg.Add(1)
+
+			go func(track Track) {
+				sem <- struct{}{}
+
+				defer wg.Done()
+				err := downloadFile(track, client, false, p)
+				if err != nil {
+					log.Printf("Failed to download track: %s by %s. Error: %v\n", track.Title, track.ArtistName, err)
+					errChan <- err
+				}
+
+				<-sem
+			}(track)
+		}
+
+		wg.Wait()
+
+		fmt.Println()
+		log.Printf("- Downloaded all tracks for %s\n", permalink)
+		close(errChan)
+
+		for err := range errChan {
+			if err != nil {
+				log.Printf("Download error: %v\n", err)
+			}
 		}
 	}
 }
