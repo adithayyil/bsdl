@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/adithayyil/bsdl/bsdl"
+	bsdl "github.com/adithayyil/bsdl/src"
 )
 
 func main() {
