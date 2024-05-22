@@ -1,43 +1,38 @@
-name: Build
+name: Build and Upload bsdl Binaries
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.17
 
-    - name: Build Windows binary
-      env:
-        GOOS: windows
-        GOARCH: amd64
-      run: go build -o bsdl.exe bsdl.go
+    - name: Build binary
+      run: |
+        mkdir -p build
+        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o build/myapp-${{ matrix.goos }}-${{ matrix.goarch }}
 
-    - name: Build Linux binary
-      env:
-        GOOS: linux
-        GOARCH: amd64
-      run: go build -o bsdl bsdl.go
-
-    - name: Build macOS binary
-      env:
-        GOOS: darwin
-        GOARCH: amd64
-      run: go build -o bsdl bsdl.go
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+    - name: Upload binary
+      uses: actions/upload-artifact@v3
       with:
-        name: binaries
-        path: |
-          bsdl.exe
-          bsdl
+        name: bsdl-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: build/bsdl-${{ matrix.goos }}-${{ matrix.goarch }}
