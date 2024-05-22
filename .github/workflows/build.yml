@@ -1,0 +1,43 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Build Windows binary
+      env:
+        GOOS: windows
+        GOARCH: amd64
+      run: go build -o bsdl.exe bsdl.go
+
+    - name: Build Linux binary
+      env:
+        GOOS: linux
+        GOARCH: amd64
+      run: go build -o bsdl bsdl.go
+
+    - name: Build macOS binary
+      env:
+        GOOS: darwin
+        GOARCH: amd64
+      run: go build -o bsdl bsdl.go
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: binaries
+        path: |
+          bsdl.exe
+          bsdl
