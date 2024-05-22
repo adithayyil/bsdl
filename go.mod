@@ -1,6 +1,6 @@
 module github.com/adithayyil/bsdl
 
-go 1.22.2
+go 1.22
 
 require (
 	github.com/bogem/id3v2/v2 v2.1.4
