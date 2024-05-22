@@ -18,7 +18,7 @@ var artist = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		artistPermalink := args[0]
-		DownloadArtistMusic(artistPermalink)
+		downloadArtistTracks(artistPermalink)
 	},
 }
 
