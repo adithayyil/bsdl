@@ -22,6 +22,8 @@ builds:
       - linux
       - windows
       - darwin
+    flags:
+      - -mod=vendor
 
 archives:
   - format: tar.gz
@@ -41,6 +43,32 @@ archives:
 changelog:
   sort: asc
   filters:
+    include:
+      - "^feature:"
+      - "^fix:"
     exclude:
       - "^docs:"
       - "^test:"
+
+project_name: bsdl
+
+release:
+  github:
+    owner: adithayyil
+    name: bsdl
+
+brews:
+  - 
+    name: bsdl
+    homepage: "https://github.com/adithayyil/bsdl"
+    description: "BeatStars Music Downloader"
+    tap:
+      owner: adithayyil
+      name: homebrew-bsdl
+    commit_author:
+      name: adithayyil
+      email: thayyiladi@gmail.com
+    caveats: "Usage: bsdl --help"
+
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
