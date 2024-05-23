@@ -28,7 +28,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
-          version: ${{ github.ref }}
+          version: ${{ env.GITHUB_REF_NAME }}
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.PUBLISHER_TOKEN }}
