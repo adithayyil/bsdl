@@ -34,7 +34,7 @@ type TrackData struct {
 	} `json:"response"`
 }
 
-func downloadTrack(link string) {
+func downloadTrack(link string, streamOnly bool) {
 	regex := regexp.MustCompile(`/beat/.*?-(\d+)$`)
 	match := regex.FindStringSubmatch(link)
 
@@ -47,7 +47,7 @@ func downloadTrack(link string) {
 			log.Fatalf("Track from link %s not found\n", link)
 		} else {
 			p := mpb.New()
-			downloadFile(track, client, true, p)
+			downloadFile(track, client, true, streamOnly, p)
 
 			fmt.Println()
 			log.Printf("Downloaded %s by %s\n", track.Title, track.ArtistName)

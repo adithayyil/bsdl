@@ -26,35 +26,27 @@ type Track struct {
 	Tags             []string `json:"tags"`
 }
 
-func downloadFile(track Track, client *http.Client, single bool, p *mpb.Progress) error {
+func downloadFile(track Track, client *http.Client, single bool, streamOnly bool, p *mpb.Progress) error {
 	url := track.StreamURL
 	artistName := track.ArtistName
 	filename := track.Title
 
 	resp, err := client.Get(url)
-	if err != nil {
-		return err
-	}
+	checkError(err)
 	defer resp.Body.Close()
 
 	bar := p.AddBar(resp.ContentLength,
 		mpb.PrependDecorators(
-			decor.Name(fmt.Sprintf("Downloading %s: ", track.Title)),
-			decor.CountersKibiByte("% .2f / % .2f"),
+			decor.Name(fmt.Sprintf("Downloading %s •", track.Title)),
 		),
 		mpb.AppendDecorators(
 			decor.OnComplete(decor.EwmaETA(decor.ET_STYLE_MMSS, 60), "Downloaded!"),
-			decor.Name(" | "),
-			decor.AverageSpeed(decor.UnitKB, "% .2f"),
 		),
 	)
 
 	proxyReader := bar.ProxyReader(resp.Body)
-
 	bodyBytes, err := io.ReadAll(proxyReader)
-	if err != nil {
-		return err
-	}
+	checkError(err)
 
 	contentType := http.DetectContentType(bodyBytes[:512])
 	var extension string
@@ -79,12 +71,15 @@ func downloadFile(track Track, client *http.Client, single bool, p *mpb.Progress
 	}
 
 	filePath := dirPath + "/" + filename + extension
-	err = os.WriteFile(filePath, bodyBytes, 0644)
-	if err != nil {
-		return err
-	}
 
-	embedMetadata(track, filePath)
+	if streamOnly {
+		err = os.WriteFile(filePath, bodyBytes, 0644)
+		checkError(err)
+	} else {
+		err = os.WriteFile(filePath, bodyBytes, 0644)
+		checkError(err)
+		embedMetadata(track, filePath)
+	}
 
 	return nil
 }

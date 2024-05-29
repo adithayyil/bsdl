@@ -47,7 +47,11 @@ type ArtistData struct {
 	Hits    []Hit `json:"hits"`
 }
 
-func downloadArtistTracks(permalink string) {
+func downloadArtistTracks(permalink string, streamOnly bool, threads int) {
+	if threads < 1 {
+		log.Fatal("Number of threads must be greater than 1")
+	}
+
 	client := &http.Client{}
 	log.Println("Retrieving artist tracks...")
 	tracks := getArtistTracks(permalink, client)
@@ -63,7 +67,7 @@ func downloadArtistTracks(permalink string) {
 		p := mpb.New()
 
 		// Create a buffered channel to limit the number of concurrent downloads
-		sem := make(chan struct{}, 10)
+		sem := make(chan struct{}, threads)
 
 		for _, track := range tracks {
 			wg.Add(1)
@@ -72,7 +76,7 @@ func downloadArtistTracks(permalink string) {
 				sem <- struct{}{}
 
 				defer wg.Done()
-				err := downloadFile(track, client, false, p)
+				err := downloadFile(track, client, false, streamOnly, p)
 				if err != nil {
 					log.Printf("Failed to download track: %s by %s. Error: %v\n", track.Title, track.ArtistName, err)
 					errChan <- err
