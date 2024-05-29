@@ -6,9 +6,12 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:     "bsdl",
-	Version: "0.0.0",
+	Version: "0.4",
 	Short:   `BeatStars Music Downloader`,
 }
+
+var streamOnly bool
+var threads int
 
 var artist = &cobra.Command{
 	Use:     "artist [permalink]",
@@ -18,7 +21,7 @@ var artist = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		artistPermalink := args[0]
-		downloadArtistTracks(artistPermalink)
+		downloadArtistTracks(artistPermalink, streamOnly, threads)
 	},
 }
 
@@ -30,7 +33,7 @@ var track = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		link := args[0]
-		downloadTrack(link)
+		downloadTrack(link, streamOnly)
 	},
 }
 
@@ -39,6 +42,9 @@ func Execute() {
 }
 
 func init() {
+	artist.PersistentFlags().BoolVar(&streamOnly, "stream-only", false, "Get streams only and don't embed metadata")
+	artist.PersistentFlags().IntVar(&threads, "threads", 6, "Number of concurrent downloads")
+	track.PersistentFlags().BoolVar(&streamOnly, "stream-only", false, "Get streams only and don't embed metadata")
 	rootCmd.AddCommand(artist)
 	rootCmd.AddCommand(track)
 }
