@@ -6,7 +6,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:     "bsdl",
-	Version: "0.6",
+	Version: "1.0",
 	Short:   `BeatStars Music Downloader`,
 }
 
