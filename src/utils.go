@@ -1,7 +1,6 @@
 package bsdl
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -13,25 +12,33 @@ func checkError(err error, info ...string) {
 	}
 }
 
-func makeHTTPRequest(client *http.Client, method, url string, data *strings.Reader) []byte {
-	var req *http.Request
+func checkStatusCode(statusCode int, info ...string) {
+	if statusCode == 404 {
+		log.Fatal("404 Not found ", info)
+	}
+
+	if statusCode != 200 {
+		log.Fatal(statusCode, info)
+	}
+}
+
+func makeHTTPRequest(client *http.Client, method, url string, data *strings.Reader) *http.Response {
+	var request *http.Request
 	var err error
 
 	if data != nil {
-		req, err = http.NewRequest(method, url, data)
+		request, err = http.NewRequest(method, url, data)
 	} else {
-		req, err = http.NewRequest(method, url, nil)
+		request, err = http.NewRequest(method, url, nil)
 	}
 	checkError(err)
 
-	req.Header = getDefaultHeaders()
-	resp, err := client.Do(req)
+	request.Header = getDefaultHeaders()
+	response, err := client.Do(request)
 	checkError(err)
-	defer resp.Body.Close()
-	bodyText, err := io.ReadAll(resp.Body)
-	checkError(err)
+	checkStatusCode(response.StatusCode, "Trouble accessing: ", url)
 
-	return bodyText
+	return response
 }
 
 func getDefaultHeaders() http.Header {

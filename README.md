@@ -10,7 +10,7 @@ bsdl artist lovbug
 ```
 ### Download a track from a link
 ```shell
-bsdl track https://www.beatstars.com/beat/lovbug-skoolio-renter_135bpm-15063259
+bsdl beat https://www.beatstars.com/beat/lovbug-skoolio-renter_135bpm-15063259
 ```
 
 ## Installation

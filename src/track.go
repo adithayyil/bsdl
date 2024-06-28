@@ -3,6 +3,7 @@ package bsdl
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -59,7 +60,10 @@ func downloadTrack(link string, streamOnly bool) {
 
 func getTrack(trackID string, client *http.Client) Track {
 	trackDataURL := fmt.Sprintf("https://main.v2.beatstars.com/beat?id=%s&fields=details", trackID)
-	trackDataReq := makeHTTPRequest(client, "GET", trackDataURL, nil)
+	trackDataResp := makeHTTPRequest(client, "GET", trackDataURL, nil)
+	trackDataReq, err := io.ReadAll(trackDataResp.Body)
+	checkError(err)
+	defer trackDataResp.Body.Close()
 
 	var trackData TrackData
 	json.Unmarshal(trackDataReq, &trackData)

@@ -31,9 +31,7 @@ func downloadFile(track Track, client *http.Client, single bool, streamOnly bool
 	artistName := track.ArtistName
 	filename := track.Title
 
-	resp, err := client.Get(url)
-	checkError(err)
-	defer resp.Body.Close()
+	resp := makeHTTPRequest(client, "GET", url, nil)
 
 	bar := p.AddBar(resp.ContentLength,
 		mpb.PrependDecorators(
@@ -47,6 +45,7 @@ func downloadFile(track Track, client *http.Client, single bool, streamOnly bool
 	proxyReader := bar.ProxyReader(resp.Body)
 	bodyBytes, err := io.ReadAll(proxyReader)
 	checkError(err)
+	defer resp.Body.Close()
 
 	contentType := http.DetectContentType(bodyBytes[:512])
 	var extension string

@@ -3,6 +3,7 @@ package bsdl
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -105,7 +106,11 @@ func getArtistTracks(permalink string, client *http.Client) []Track {
 	var allTracks []Track
 
 	artistIDURL := fmt.Sprintf("https://main.v2.beatstars.com/musician?permalink=%s", permalink)
-	bodyTextArtistID := makeHTTPRequest(client, "GET", artistIDURL, nil)
+	artistInfoResp := makeHTTPRequest(client, "GET", artistIDURL, nil)
+	bodyTextArtistID, err := io.ReadAll(artistInfoResp.Body)
+	checkError(err)
+	defer artistInfoResp.Body.Close()
+
 	var musician MusicianResponse
 	json.Unmarshal(bodyTextArtistID, &musician)
 	userID := int(musician.Response.Data.Profile.UserID)
@@ -128,7 +133,10 @@ func getArtistTracks(permalink string, client *http.Client) []Track {
 			"filters": "",
 			"ruleContexts": []
 		}`, page, memberId)
-		artistDataResp := makeHTTPRequest(client, "POST", queryURL, strings.NewReader(data))
+		queryResp := makeHTTPRequest(client, "POST", queryURL, strings.NewReader(data))
+		artistDataResp, err := io.ReadAll(queryResp.Body)
+		checkError(err)
+		defer queryResp.Body.Close()
 
 		var artistData ArtistData
 		json.Unmarshal(artistDataResp, &artistData)
